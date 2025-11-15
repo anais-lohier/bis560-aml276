@@ -4,7 +4,7 @@ BIS 560 Final Project Analysis
 
 ## Data Cleaning (Excel) ##
 The original raw dataset used for this project is available in the repository as:
-[original_data.csv](ICIgroups1and2.csv)
+[ICI_groups1and2.csv](ICI_groups1and2.csv)
 
 Before importing the dataset into R, an initial round of cleaning was performed in Excel to simplify the raw file and retain only the variables required for analysis. I filtered the dataset to keep the essential demographic fields `SubjectID`, `Gender`, `Age`, and `Ethnicity` along with the four repeated measurement rounds for each validated facial temperature region (`canthiMax1–4` and `T_Max1–4`). Using these columns, I then calculated two averaged temperature variables for each participant: `T_CEmax_mean`, derived from the four canthus measurements, and `T_max_mean`, derived from the four full-face maximum measurements. Computing these averages reduces random noise across rounds and provides a more stable, reliable temperature estimate. The resulting cleaned dataset was saved as `data_pre_processed.csv`, which serves as the input for all subsequent preprocessing and analysis conducted in R.
 
