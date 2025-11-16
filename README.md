@@ -13,7 +13,7 @@ This stage imports the cleaned dataset, assesses completeness, and isolates the 
 
 ![tablec2](tablec2.png)
 
-After verifying completeness, the dataset is restricted to the analytic subset: `T_CEmax_mean`, `T_max_mean`, `Gender`, `Age`, and `Ethnicity`. The focus on these columns aligns with validated variables and ensures that subsequent computations are limited to fields directly relevant to the analytic question. Age is filtered to retain participants between 18 and 30 years, mirroring the study’s dominant demographic composition and minimizing variability attributable to thermoregulatory differences outside this range. The previewed output confirms that the filtered dataset contains only the intended records and variables.
+After verifying completeness, the dataset is restricted to the analytic subset: `T_CEmax_mean`, `T_max_mean`, `Gender`, `Age`, and `Ethnicity`. The focus on these columns aligns with validated variables and ensures that subsequent computations are limited to fields directly relevant to the analytic question. Age is filtered to retain participants between 18 and 30 years, mirroring the study’s dominant demographic composition and minimizing variability attributable to thermoregulatory differences outside this range. The resulting cleaned dataset is provided in this repository as [analytic_subset.csv](analytic_subset.csv), and the previewed output confirms that it contains only the intended records and variables.
 
 ![preview](preview.png)
 
