@@ -1,0 +1,226 @@
+---
+title: "The Significance of 37 °C: Temperature, Ethnicity, and the Limits of Normality"
+subtitle: "The Analysis"
+author: "Anaïs Lohier"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+editor: source
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
+---
+
+### Libraries
+This section loads the small set of packages used for data import, wrangling, and table formatting. These libraries provide the core functions needed for processing the dataset but do not alter the data themselves.
+```{r}
+# load required packages 
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+library(knitr)
+library(car)
+library(effectsize)
+library(ggplot2)
+```
+
+# Data Pre-Processing
+The pre-processing step imports the cleaned dataset and evaluates completeness across all four measurement rounds for both T_max and T_CEmax. This provides a transparent account of missingness before any averaging occurs. The analytic subset then isolates the validated mean temperature variables and key demographic fields and restricts the sample to participants aged 18–30, reflecting the actual structure of the dataset.
+```{r Data Pre-Processing}
+# import cleaned data
+data <- read.csv("data_pre_processed.csv", stringsAsFactors = FALSE)
+
+# define round-level variables used to assess completeness - 4 measurement rounds for both canthi and full-face maxima
+round_vars <- c(
+  "canthiMax1", "T_Max1",
+  "canthiMax2", "T_Max2",
+  "canthiMax3", "T_Max3",
+  "canthiMax4", "T_Max4")
+
+# count missing values for each round prior to averaging
+missing_counts <- sapply(data[round_vars], function(x) sum(is.na(x)))
+total_rows <- nrow(data)
+
+# create a table showing missing counts and percentages
+missing_rounds <- data.frame(
+  Variable = round_vars,
+  Missing = missing_counts,
+  Percent = round(100 * missing_counts / total_rows, 2))
+
+# display round-level completeness summary (validated variable + demographics)
+kable(missing_rounds, row.names = FALSE)
+
+# identify variables retained for the analytic subset
+cols <- c("SubjectID","T_CEmax_mean","T_max_mean","Age","Ethnicity")
+
+# filter and restrict to the analytic sample (age-banded categories 18–30)
+analytic_subset <- data |>
+  dplyr::select(any_of(cols)) |>    # keep only required variables
+  dplyr::filter(Age %in% c("18-20","21-25","21-30"))
+
+# save analytic subset and preview its structure
+write.csv(analytic_subset, "analytic_subset.csv", row.names = FALSE)
+kable(head(analytic_subset))
+
+# count unique participants contributing to the analytic dataset
+n_subjects <- analytic_subset |> 
+  dplyr::pull(SubjectID) |> 
+  unique() |> 
+  length()
+
+kable(n_subjects)
+```
+
+# Pre-Analysis Summary Statistics
+After means are computed, missingness is reassessed for the final analytic variables to confirm data integrity. The distribution of ethnicity is then summarized to characterize the sample and to clarify the internal composition of the dataset’s categorical structure.
+```{r Data Pre-Analysis}
+# analytic variables checked for final-stage missingness
+summary_vars <- c("T_CEmax_mean", "T_max_mean", "Age", "Ethnicity")
+
+# calculate missingness for each variable in the analytic dataset
+missing_summary <- data.frame(
+  Variable = summary_vars,
+  Missing  = sapply(data[summary_vars], function(x) sum(is.na(x))))
+
+# display missingness table for analytic variables
+kable(missing_summary, row.names = FALSE)
+
+# summarize ethnicity distribution within the analytic subset
+ethnicity_table <- analytic_subset |>
+  count(Ethnicity) |> # count per category
+  mutate(Percent = round(100 * n / sum(n), 2))
+
+# display composition of ethnicity categories
+kable(ethnicity_table, row.names = FALSE)
+```
+
+# Statistical Assumptions
+This section verifies that one-way ANOVA is appropriate for each outcome. Residual normality is assessed using Q–Q plots and the Shapiro–Wilk test, and variance equality is evaluated using the Brown–Forsythe test. These diagnostics ensure that model assumptions are satisfied before interpreting ANOVA results.
+
+### T_CEmax_mean 
+Assumptions for the T_CEmax_mean model are evaluated through residual inspection and a Brown–Forsythe test for homogeneity of variances.
+```{r}
+group_var <- "Ethnicity"  # grouping variable used for all models
+
+# build frame for ANOVA diagnostics
+analysis1 <- data.frame(
+  outcome = analytic_subset$T_CEmax_mean,
+  group   = factor(analytic_subset[[group_var]]))
+
+# fit ANOVA model and extract residuals
+m1 <- aov(outcome ~ group, data = analysis1)
+r1 <- residuals(m1)
+
+# Q-Q plot + line to visually assess residual normality 
+qqnorm(r1, main = "Q–Q: T_CEmax_mean"); qqline(r1)
+# formal test of residual normality
+shapiro.test(r1)
+
+# Brown–Forsythe test (median-centered) for variance equality
+leveneTest(outcome ~ group, data = analysis1, center = median)  
+```
+
+
+### T_max_mean
+Assumptions for the T_max_mean model are evaluated using the same residual diagnostics and variance test.
+```{r}
+# build frame for T_max_mean model
+analysis2 <- data.frame(
+  outcome = analytic_subset$T_max_mean,
+  group   = factor(analytic_subset[[group_var]]))
+
+# fit model and extract residuals
+m2 <- aov(outcome ~ group, data = analysis2)
+r2 <- residuals(m2)
+
+# assess residual normality
+qqnorm(r2, main = "Q–Q: T_max_mean"); qqline(r2)
+shapiro.test(r2)
+
+# Brown–Forsythe test for homogeneity of variances
+leveneTest(outcome ~ group, data = analysis2, center = median)
+```
+
+# Descriptive Statistics 
+This section provides summary statistics for each ethnicity group, including means, standard deviations, and group counts for both temperature measures. These values characterize the distribution of the analytic variables prior to inferential testing.
+```{r}
+# compute mean/SD for both temp variables within each ethnicity category
+descriptive_stats <- analytic_subset |>
+  group_by(Ethnicity) |>
+  summarise(
+    mean_T_CEmax = mean(T_CEmax_mean),
+    sd_T_CEmax = sd(T_CEmax_mean),
+    mean_T_max = mean(T_max_mean),
+    sd_T_max = sd(T_max_mean))
+# display descriptive table
+kable(descriptive_stats)
+```
+
+# ANOVA Analysis
+This section reports the one-way ANOVA models evaluating whether mean temperature values differ across ethnicity groups. Effect sizes accompany statistical tests to describe the magnitude of observed differences.
+```{r T_CEmax_mean ANOVA}
+# one-way ANOVA for inner-canthus temperature
+model_ce <- aov(T_CEmax_mean ~ Ethnicity, data = analytic_subset)
+summary(model_ce)
+
+# effect size estimate
+eta_squared(model_ce)
+```
+
+```{r T_max_mean ANOVA}
+# one-way ANOVA for full-face maximum temperature
+model_max <- aov(T_max_mean ~ Ethnicity, data = analytic_subset)
+summary(model_max)
+
+# Effect size
+eta_squared(model_max)
+```
+
+# Visualizations
+This section presents mean temperature values with 95% confidence intervals across ethnicity groups. These visualizations complement the ANOVA results by illustrating group-level patterns in the data.
+
+### T_CEmax_mean
+```{r}
+# summary table with means and standard errors for plotting
+summary_df <- analytic_subset |>
+  group_by(Ethnicity) |>
+  summarise(
+    mean_CE = mean(T_CEmax_mean),
+    se_CE   = sd(T_CEmax_mean) / sqrt(n()),
+    mean_max = mean(T_max_mean),
+    se_max   = sd(T_max_mean) / sqrt(n()))
+
+# plot mean T_CEmax with 95% CI by ethnicity
+ggplot(summary_df, aes(x = str_wrap(Ethnicity,17), y = mean_CE)) +
+  geom_point(size = 3) +                                      # point estimate
+  geom_errorbar(aes(ymin = mean_CE - 1.96*se_CE,              # CI bounds
+                    ymax = mean_CE + 1.96*se_CE),
+                width = 0.1) +
+  labs(
+    title = "Mean Inner-Canthus Temperature (±95% CI)",
+    x = "Ethnicity",
+    y = "Mean T_CEmax (°C)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### T_max_mean
+```{r}
+# plot mean T_max with 95% CI by ethnicity
+ggplot(summary_df, aes(x = str_wrap(Ethnicity,17), y = mean_max)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_max - 1.96*se_max,
+                    ymax = mean_max + 1.96*se_max),
+                width = 0.1) +
+  labs(
+    title = "Mean Full-Face Maximum Temperature (±95% CI)",
+    x = "Ethnicity",
+    y = "Mean T_max (°C)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
