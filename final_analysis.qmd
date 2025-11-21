@@ -55,7 +55,7 @@ missing_rounds <- data.frame(
 kable(missing_rounds, row.names = FALSE)
 
 # identify variables retained for the analytic subset
-cols <- c("SubjectID","T_CEmax_mean","T_max_mean","Age","Ethnicity")
+cols <- c("SubjectID","T_CEmax_mean","T_max_mean","Age", "Ethnicity")
 
 # filter and restrict to the analytic sample (age-banded categories 18–30)
 analytic_subset <- data |>
@@ -146,18 +146,30 @@ leveneTest(outcome ~ group, data = analysis2, center = median)
 ```
 
 # Descriptive Statistics 
-This section provides summary statistics for each ethnicity group, including means, standard deviations, and group counts for both temperature measures. These values characterize the distribution of the analytic variables prior to inferential testing.
+This section provides summary statistics for each ethnicity group, including means, standard deviations, and observed ranges (minimum and maximum) for both temperature measures. These values characterize the distribution of the analytic variables prior to inferential testing and confirm that all groups fall within physiologically expected bounds.
+
 ```{r}
 # compute mean/SD for both temp variables within each ethnicity category
-descriptive_stats <- analytic_subset |>
+
+# descriptive statistics for T_CEmax_mean
+desc_tcemax <- analytic_subset |>
   group_by(Ethnicity) |>
-  summarise(
+  summarize(
     mean_T_CEmax = mean(T_CEmax_mean),
-    sd_T_CEmax = sd(T_CEmax_mean),
+    sd_T_CEmax   = sd(T_CEmax_mean),
+    min_T_CEmax  = min(T_CEmax_mean),
+    max_T_CEmax  = max(T_CEmax_mean))
+kable(desc_tcemax, caption = "Descriptive Statistics for T_CEmax_mean by Ethnicity")
+
+# descriptive statistics for T_max_mean
+desc_tmax <- analytic_subset |>
+  group_by(Ethnicity) |>
+  summarize(
     mean_T_max = mean(T_max_mean),
-    sd_T_max = sd(T_max_mean))
-# display descriptive table
-kable(descriptive_stats)
+    sd_T_max   = sd(T_max_mean),
+    min_T_max  = min(T_max_mean),
+    max_T_max  = max(T_max_mean))
+kable(desc_tmax, caption = "Descriptive Statistics for T_max_mean by Ethnicity")
 ```
 
 # ANOVA Analysis
