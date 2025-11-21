@@ -1,4 +1,4 @@
-# The Significance of 37 °C: Temperature, Ethnicity, and the Limits of Normality
+# The Significance of 37 °C: Temperature, Ethnicity, and the Architecture of Normality
 BIS 560 Final Project Analysis
 
 
