@@ -26,6 +26,11 @@ To contextualize the sample composition, the distribution of ethnicity is then s
 
 ![tablec1](tablec1.png)
 
+## Descriptive Statistics ##
+To characterize temperature variation across the analytic sample, descriptive statistics were computed for both infrared measures (`T_CEmax_mean` and `T_max_mean`) within each ethnicity category. Each table reports the mean, standard deviation, and observed range (minimum and maximum), providing a fuller view of within-group variability and confirming the absence of extreme outliers.
+
+![tablecd2](tabled2.png)
+
 ## Statistical Assumptions ##
 Before conducting inferential tests, the analytic subset was evaluated to ensure that one-way ANOVA was appropriate for both temperature outcomes. Residual diagnostics were generated for each model, including:
 - Q–Q plots, used to visually assess approximate residual normality
